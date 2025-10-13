@@ -335,10 +335,22 @@ void demonstrate_epoch_conversion(void) {
  * Use demonstrate_epoch_conversion() to verify your conversion logic
  */
 void get_current_ntp_time(ntp_timestamp_t *ntp_ts){
-    printf("get_current_ntp_time() - TO BE IMPLEMENTED\n");
+    //printf("get_current_ntp_time() - TO BE IMPLEMENTED\n");
     // TODO: Implement this function
     // Hint: Use gettimeofday(), convert epoch, scale microseconds
     memset(ntp_ts, 0, sizeof(ntp_timestamp_t));
+    
+    if (!ntp_ts) return;
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) != 0) {
+        // leave it zeroed if its an error
+        return;
+    }
+    uint64_t ntp_sec  = (uint64_t)tv.tv_sec + (uint64_t)NTP_EPOCH_OFFSET;
+    uint64_t ntp_frac = ((uint64_t)tv.tv_usec * (uint64_t)NTP_FRACTION_SCALE) / 1000000ULL;
+
+    ntp_ts->seconds  = (uint32_t)ntp_sec;
+    ntp_ts->fraction = (uint32_t)ntp_frac;
 }
 
 //STUDENT TODO
@@ -568,17 +580,33 @@ void ntp_to_host(ntp_packet_t* packet){
  * RC_OK (0) on success, RC_BAD_PACKET (-1) if packet is NULL
  */
 int build_ntp_request(ntp_packet_t* packet) {
-    printf("build_ntp_request() - TO BE IMPLEMENTED\n");
+    //printf("build_ntp_request() - TO BE IMPLEMENTED\n");
     // TODO: Implement this function
     // Hint: memset to zero, set bit fields with macro, set basic fields, set transmit time
     if (!packet) {
         return RC_BAD_PACKET;
     }
     memset(packet, 0, sizeof(ntp_packet_t));
-    
+#ifdef SET_NTP_LI_VN_MODE
+    SET_NTP_LI_VN_MODE(packet, NTP_LI_UNSYNC & 0x3, NTP_VERSION & 0x7, NTP_MODE_CLIENT & 0x7);
+#else
+    packet->li_vn_mode =
+        (uint8_t)(((NTP_LI_UNSYNC & 0x3) << 6) |
+                  ((NTP_VERSION   & 0x7) << 3) |
+                  ((NTP_MODE_CLIENT & 0x7)));
+#endif
+    packet->stratum   = 0;    // unspecified for client
+    packet->poll      = 6;    // 64 seconds
+    packet->precision = -20;  // 1 microsecond
+
+    packet->root_delay      = 0;  
+    packet->root_dispersion = 0; 
+    packet->reference_id    = 0;
+
+    // Timestamps 
+    get_current_ntp_time(&packet->xmit_time);
     // After you implement this, uncomment the line below to debug:
-    // debug_print_bit_fields(packet);
-    
+    debug_print_bit_fields(packet);
     return RC_OK;
 }
 
