@@ -2,28 +2,28 @@
 triple:          'arm64-apple-darwin'
 binary-path:     ntp-client
 relocations:
-  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100001F80, symSize: 0x1DC }
-  - { offsetInCU: 0xF2, offset: 0xF2, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100001F80, symSize: 0x1DC }
-  - { offsetInCU: 0x160, offset: 0x160, size: 0x8, addend: 0x0, symName: _demonstrate_epoch_conversion, symObjAddr: 0x1DC, symBinAddr: 0x10000215C, symSize: 0xD8 }
-  - { offsetInCU: 0x1A4, offset: 0x1A4, size: 0x8, addend: 0x0, symName: _usage, symObjAddr: 0x2B4, symBinAddr: 0x100002234, symSize: 0xE0 }
-  - { offsetInCU: 0x1C8, offset: 0x1C8, size: 0x8, addend: 0x0, symName: _resolve_hostname, symObjAddr: 0x394, symBinAddr: 0x100002314, symSize: 0x90 }
-  - { offsetInCU: 0x21A, offset: 0x21A, size: 0x8, addend: 0x0, symName: _query_ntp_server, symObjAddr: 0x424, symBinAddr: 0x1000023A4, symSize: 0x304 }
-  - { offsetInCU: 0x2A9, offset: 0x2A9, size: 0x8, addend: 0x0, symName: _create_udp_socket, symObjAddr: 0x728, symBinAddr: 0x1000026A8, symSize: 0xBC }
-  - { offsetInCU: 0x2DF, offset: 0x2DF, size: 0x8, addend: 0x0, symName: _send_ntp_request, symObjAddr: 0x7E4, symBinAddr: 0x100002764, symSize: 0x7C }
-  - { offsetInCU: 0x331, offset: 0x331, size: 0x8, addend: 0x0, symName: _recv_ntp_response, symObjAddr: 0x860, symBinAddr: 0x1000027E0, symSize: 0x150 }
-  - { offsetInCU: 0x391, offset: 0x391, size: 0x8, addend: 0x0, symName: _build_ntp_request, symObjAddr: 0x9B0, symBinAddr: 0x100002930, symSize: 0xB4 }
-  - { offsetInCU: 0x3BB, offset: 0x3BB, size: 0x8, addend: 0x0, symName: _print_ntp_packet_info, symObjAddr: 0xA64, symBinAddr: 0x1000029E4, symSize: 0x298 }
-  - { offsetInCU: 0x40E, offset: 0x40E, size: 0x8, addend: 0x0, symName: _ntp_to_net, symObjAddr: 0xCFC, symBinAddr: 0x100002C7C, symSize: 0xD4 }
-  - { offsetInCU: 0x434, offset: 0x434, size: 0x8, addend: 0x0, symName: _get_current_ntp_time, symObjAddr: 0xDD0, symBinAddr: 0x100002D50, symSize: 0xB0 }
-  - { offsetInCU: 0x487, offset: 0x487, size: 0x8, addend: 0x0, symName: _ntp_to_host, symObjAddr: 0xE80, symBinAddr: 0x100002E00, symSize: 0xD4 }
-  - { offsetInCU: 0x4AD, offset: 0x4AD, size: 0x8, addend: 0x0, symName: _calculate_ntp_offset, symObjAddr: 0xF54, symBinAddr: 0x100002ED4, symSize: 0xE0 }
-  - { offsetInCU: 0x504, offset: 0x504, size: 0x8, addend: 0x0, symName: _print_ntp_results, symObjAddr: 0x1034, symBinAddr: 0x100002FB4, symSize: 0x5C }
-  - { offsetInCU: 0x548, offset: 0x548, size: 0x8, addend: 0x0, symName: _debug_print_bit_fields, symObjAddr: 0x1090, symBinAddr: 0x100003010, symSize: 0x16C }
-  - { offsetInCU: 0x59B, offset: 0x59B, size: 0x8, addend: 0x0, symName: _ntp_time_to_string, symObjAddr: 0x11FC, symBinAddr: 0x10000317C, symSize: 0x204 }
-  - { offsetInCU: 0x62B, offset: 0x62B, size: 0x8, addend: 0x0, symName: _ntp_time_to_double, symObjAddr: 0x1400, symBinAddr: 0x100003380, symSize: 0x2C }
-  - { offsetInCU: 0x655, offset: 0x655, size: 0x8, addend: 0x0, symName: _print_ntp_time, symObjAddr: 0x142C, symBinAddr: 0x1000033AC, symSize: 0x100 }
-  - { offsetInCU: 0x6B7, offset: 0x6B7, size: 0x8, addend: 0x0, symName: _ntp_ts_to_net, symObjAddr: 0x152C, symBinAddr: 0x1000034AC, symSize: 0x80 }
-  - { offsetInCU: 0x6DD, offset: 0x6DD, size: 0x8, addend: 0x0, symName: __OSSwapInt32, symObjAddr: 0x15AC, symBinAddr: 0x10000352C, symSize: 0x20 }
-  - { offsetInCU: 0x705, offset: 0x705, size: 0x8, addend: 0x0, symName: _ntp_ts_to_host, symObjAddr: 0x15CC, symBinAddr: 0x10000354C, symSize: 0x80 }
-  - { offsetInCU: 0x72B, offset: 0x72B, size: 0x8, addend: 0x0, symName: _decode_reference_id, symObjAddr: 0x164C, symBinAddr: 0x1000035CC, symSize: 0x1E4 }
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100001BB0, symSize: 0x1DC }
+  - { offsetInCU: 0xF9, offset: 0xF9, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100001BB0, symSize: 0x1DC }
+  - { offsetInCU: 0x167, offset: 0x167, size: 0x8, addend: 0x0, symName: _demonstrate_epoch_conversion, symObjAddr: 0x1DC, symBinAddr: 0x100001D8C, symSize: 0xD8 }
+  - { offsetInCU: 0x1AB, offset: 0x1AB, size: 0x8, addend: 0x0, symName: _usage, symObjAddr: 0x2B4, symBinAddr: 0x100001E64, symSize: 0xE0 }
+  - { offsetInCU: 0x1CF, offset: 0x1CF, size: 0x8, addend: 0x0, symName: _resolve_hostname, symObjAddr: 0x394, symBinAddr: 0x100001F44, symSize: 0x90 }
+  - { offsetInCU: 0x221, offset: 0x221, size: 0x8, addend: 0x0, symName: _query_ntp_server, symObjAddr: 0x424, symBinAddr: 0x100001FD4, symSize: 0x304 }
+  - { offsetInCU: 0x2B0, offset: 0x2B0, size: 0x8, addend: 0x0, symName: _create_udp_socket, symObjAddr: 0x728, symBinAddr: 0x1000022D8, symSize: 0xBC }
+  - { offsetInCU: 0x2E6, offset: 0x2E6, size: 0x8, addend: 0x0, symName: _send_ntp_request, symObjAddr: 0x7E4, symBinAddr: 0x100002394, symSize: 0x7C }
+  - { offsetInCU: 0x338, offset: 0x338, size: 0x8, addend: 0x0, symName: _recv_ntp_response, symObjAddr: 0x860, symBinAddr: 0x100002410, symSize: 0x150 }
+  - { offsetInCU: 0x398, offset: 0x398, size: 0x8, addend: 0x0, symName: _build_ntp_request, symObjAddr: 0x9B0, symBinAddr: 0x100002560, symSize: 0xB4 }
+  - { offsetInCU: 0x3C2, offset: 0x3C2, size: 0x8, addend: 0x0, symName: _print_ntp_packet_info, symObjAddr: 0xA64, symBinAddr: 0x100002614, symSize: 0x298 }
+  - { offsetInCU: 0x415, offset: 0x415, size: 0x8, addend: 0x0, symName: _ntp_to_net, symObjAddr: 0xCFC, symBinAddr: 0x1000028AC, symSize: 0xD4 }
+  - { offsetInCU: 0x43B, offset: 0x43B, size: 0x8, addend: 0x0, symName: _get_current_ntp_time, symObjAddr: 0xDD0, symBinAddr: 0x100002980, symSize: 0xB0 }
+  - { offsetInCU: 0x48E, offset: 0x48E, size: 0x8, addend: 0x0, symName: _ntp_to_host, symObjAddr: 0xE80, symBinAddr: 0x100002A30, symSize: 0xD4 }
+  - { offsetInCU: 0x4B4, offset: 0x4B4, size: 0x8, addend: 0x0, symName: _calculate_ntp_offset, symObjAddr: 0xF54, symBinAddr: 0x100002B04, symSize: 0x1D0 }
+  - { offsetInCU: 0x592, offset: 0x592, size: 0x8, addend: 0x0, symName: _print_ntp_results, symObjAddr: 0x1124, symBinAddr: 0x100002CD4, symSize: 0x1FC }
+  - { offsetInCU: 0x5F6, offset: 0x5F6, size: 0x8, addend: 0x0, symName: _debug_print_bit_fields, symObjAddr: 0x1320, symBinAddr: 0x100002ED0, symSize: 0x16C }
+  - { offsetInCU: 0x649, offset: 0x649, size: 0x8, addend: 0x0, symName: _ntp_time_to_string, symObjAddr: 0x148C, symBinAddr: 0x10000303C, symSize: 0x204 }
+  - { offsetInCU: 0x6D9, offset: 0x6D9, size: 0x8, addend: 0x0, symName: _ntp_time_to_double, symObjAddr: 0x1690, symBinAddr: 0x100003240, symSize: 0x7C }
+  - { offsetInCU: 0x721, offset: 0x721, size: 0x8, addend: 0x0, symName: _print_ntp_time, symObjAddr: 0x170C, symBinAddr: 0x1000032BC, symSize: 0x100 }
+  - { offsetInCU: 0x783, offset: 0x783, size: 0x8, addend: 0x0, symName: _ntp_ts_to_net, symObjAddr: 0x180C, symBinAddr: 0x1000033BC, symSize: 0x80 }
+  - { offsetInCU: 0x7A9, offset: 0x7A9, size: 0x8, addend: 0x0, symName: __OSSwapInt32, symObjAddr: 0x188C, symBinAddr: 0x10000343C, symSize: 0x20 }
+  - { offsetInCU: 0x7D1, offset: 0x7D1, size: 0x8, addend: 0x0, symName: _ntp_ts_to_host, symObjAddr: 0x18AC, symBinAddr: 0x10000345C, symSize: 0x80 }
+  - { offsetInCU: 0x7F7, offset: 0x7F7, size: 0x8, addend: 0x0, symName: _decode_reference_id, symObjAddr: 0x192C, symBinAddr: 0x1000034DC, symSize: 0x1E4 }
 ...

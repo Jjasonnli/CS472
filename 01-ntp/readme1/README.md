@@ -1,0 +1,2 @@
+How I approached the assignment was by reading through the code already given. The hints and helper functions were really helpful.
+When I got stuck, I searched on ways to implement and solve it. The biggest challenge was implementing the decoding portion. The assignent was also very long. I'll start on assignments earlier next time. 

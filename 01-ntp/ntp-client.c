@@ -434,10 +434,13 @@ void ntp_time_to_string(const ntp_timestamp_t *ntp_ts, char *buffer, size_t buff
  * Use NTP_FRACTION_SCALE (2^32) constant for the division
  */
 double ntp_time_to_double(const ntp_timestamp_t* timestamp) {
-    printf("ntp_time_to_double() - TO BE IMPLEMENTED\n");
+    //printf("ntp_time_to_double() - TO BE IMPLEMENTED\n");
     // TODO: Implement this function
     // Hint: Convert both parts to double and add
-    return 0.0;
+    if (!timestamp) return 0.0;
+    double sec = (double)timestamp->seconds;
+    double frac = (double)timestamp->fraction / (double)NTP_FRACTION_SCALE; // 2^32
+    return sec + frac;
 }
 
 //STUDENT TODO
@@ -811,19 +814,39 @@ int calculate_ntp_offset(const ntp_packet_t* request,
                         const ntp_packet_t* response,
                         const ntp_timestamp_t* recv_time, 
                         ntp_result_t* result) {
-    printf("calculate_ntp_offset() - TO BE IMPLEMENTED\n");
+    // printf("calculate_ntp_offset() - TO BE IMPLEMENTED\n");
     // TODO: Implement this function
     // Hint: Extract T1-T4 timestamps, apply NTP formulas, calculate dispersion
     if (!request || !response || !result) {
         return -1;
     }
     
+    double T1 = ntp_time_to_double(&request->xmit_time);
+    double T2 = ntp_time_to_double(&response->recv_time);  
+    double T3 = ntp_time_to_double(&response->xmit_time);  
+    double T4 = ntp_time_to_double(recv_time);
+
+    double delay  = (T4 - T1) - (T3 - T2);
+    double offset = ((T2 - T1) + (T3 - T4)) / 2.0;
+
+    double srv_delay_s;
+    double srv_disp_s;
+#ifdef GET_NTP_Q1616_TS
+    srv_delay_s = GET_NTP_Q1616_TS(response->root_delay);
+    srv_disp_s  = GET_NTP_Q1616_TS(response->root_dispersion);
+#else
+    // Q16.16 to seconds
+    srv_delay_s = (double)((int32_t)response->root_delay) / 65536.0;
+    srv_disp_s  = (double)response->root_dispersion / 65536.0;
+#endif
+    double final_disp = srv_disp_s + (srv_delay_s / 2.0) + (delay / 2.0);
+    
     // Initialize result with dummy values
-    result->delay = 0.0;
-    result->offset = 0.0;
-    result->final_dispersion = 0.0;
-    memset(&result->server_time, 0, sizeof(ntp_timestamp_t));
-    memset(&result->client_time, 0, sizeof(ntp_timestamp_t));
+    result->delay = delay;
+    result->offset = offset;
+    result->final_dispersion = final_disp;
+    result->server_time = response->xmit_time;
+    result->client_time = *recv_time;
     
     return 0;
 }
@@ -933,7 +956,35 @@ void print_ntp_results(const ntp_result_t* result) {
     char svr_time_buff[TIME_BUFF_SIZE];
     char cli_time_buff[TIME_BUFF_SIZE];
 
-    printf("print_ntp_results() - TO BE IMPLEMENTED\n");
+    // printf("print_ntp_results() - TO BE IMPLEMENTED\n");
     //Hint:  Note that you really dont have to do much here other than
     //       Print out data that is passed in teh result arguement
+
+    
+    if (!result) return;
+    ntp_time_to_string(&result->server_time, svr_time_buff, sizeof(svr_time_buff), 1);
+    ntp_time_to_string(&result->client_time, cli_time_buff, sizeof(cli_time_buff), 1);
+
+    // Print server time, local time, and round-trip delay
+    printf("Server Time: %s (local time)\n", svr_time_buff);
+    printf("Local Time:  %s (local time)\n", cli_time_buff);
+    printf("Round Trip Delay: %.6f\n\n", result->delay);
+
+    // Print time offset and final dispersion
+    printf("Time Offset: %.6f seconds\n", result->offset);
+    printf("Final dispersion %.6f\n\n", result->final_dispersion);
+
+    // offset and present in milliseconds
+    double off_ms  = result->offset * 1000.0;
+    double disp_ms = result->final_dispersion * 1000.0;
+
+    // Print statements
+    if (result->offset > 0.0) {
+        printf("Your clock is running BEHIND by %.2fms\n", off_ms);
+    } else if (result->offset < 0.0) {
+        printf("Your clock is running AHEAD by %.2fms\n", -off_ms);
+    } else {
+        printf("Your clock is synchronized.\n");
+    }
+    printf("Your estimated time error will be +/- %.2fms\n", disp_ms);
 }
