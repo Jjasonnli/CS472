@@ -361,7 +361,9 @@ int gen_key_pair(crypto_key_t *key1, crypto_key_t *key2) {
  * - Processes data byte-by-byte in a simple loop
  * - Both input and output must be in range 0-63
  */
-int encrypt(crypto_key_t key, void *encrypted_text, void *clear_text, size_t len) {
+
+//Changed due to MACOS
+int mcg_encrypt(crypto_key_t key, void *encrypted_text, void *clear_text, size_t len) {
     uint8_t enc_key = GET_ENCRYPTION_KEY(key);
 
     if (encrypted_text == NULL || clear_text == NULL) {
@@ -601,7 +603,8 @@ int encrypt_string(crypto_key_t key, uint8_t *encrypted_bytes, uint8_t *clear_st
     }
     
     // Encrypt the bytes
-    int result = encrypt(key, encrypted_bytes, temp_bytes, byte_len);
+    //Changed due to MACOS
+    int result = mcg_encrypt(key, encrypted_bytes, temp_bytes, byte_len);
     free(temp_bytes);
     
     if (result != RC_OK) {

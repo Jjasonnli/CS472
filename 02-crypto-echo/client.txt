@@ -287,23 +287,10 @@ static int client_loop(int sockfd) {
         crypto_pdu_t hdr;
         int plen = build_packet(&cmd, &hdr, payload, session_key);
         if (plen < 0) {
-            printf("[ERROR] No session key established. Cannot send encrypted data.\n\n", plen);
+            printf("[ERROR] build_packet failed (%d). If sending '!' make sure to run '#' first.\n\n", plen);
             if (cmd.cmd_id == MSG_CMD_CLIENT_STOP || cmd.cmd_id == MSG_CMD_SERVER_STOP) break;
             continue;
         }
-        crypto_msg_t *req = malloc(sizeof(crypto_msg_t) + hdr.payload_len);
-        if (!req) {
-            fprintf(stderr, "[ERROR] Out of memory.\n");
-            return -1;
-
-        }
-        req->header = hdr;
-        if (hdr.payload_len > 0)
-            memcpy(req->payload, payload, hdr.payload_len);
-
-        print_msg_info(req, session_key, CLIENT_MODE); //print response
-        fflush(stdout);
-        free(req);
 
         /* Serialize 4-byte header with network-order length */
         uint8_t net_hdr[4];
@@ -325,7 +312,7 @@ static int client_loop(int sockfd) {
 
         /* If client/server stop command, we're done after sending */
         if (cmd.cmd_id == MSG_CMD_CLIENT_STOP || cmd.cmd_id == MSG_CMD_SERVER_STOP) {
-            //printf("[INFO] Exit command sent. Closing.\n");
+            printf("[INFO] Exit command sent. Closing.\n");
             break;
         }
 
@@ -349,7 +336,7 @@ static int client_loop(int sockfd) {
         if (resp->header.msg_type == MSG_KEY_EXCHANGE &&
             resp->header.payload_len == sizeof(crypto_key_t)) {
             memcpy(&session_key, resp->payload, sizeof(crypto_key_t));
-            //printf("[INFO] Session key received: 0x%04x\n\n", session_key);
+            printf("[INFO] Session key received: 0x%04x\n\n", session_key);
         } else if (resp->header.msg_type == MSG_ENCRYPTED_DATA &&
                    resp->header.payload_len > 0) {
             /* Optionally print plaintext (print_msg_info already shows it) */
@@ -359,7 +346,7 @@ static int client_loop(int sockfd) {
                 int dec = decrypt_string(session_key, plain, resp->payload, L);
                 if (dec > 0) {
                     plain[L] = '\0';
-                    //printf("[SERVER] %s\n\n", plain);
+                    printf("[SERVER] %s\n\n", plain);
                 }
                 free(plain);
             }
@@ -396,7 +383,6 @@ void start_client(const char* addr, int port) {
 }
 */
 void start_client(const char* addr, int port) {
-    printf("Starting TCP client: connecting to %s:%d\n", addr, port);
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
         perror("[ERROR] socket");
@@ -414,20 +400,17 @@ void start_client(const char* addr, int port) {
     }
 
     if (connect(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
-        perror("connect");
+        perror("[ERROR] connect");
         close(fd);
         return;
     }
 
-    printf("Connected to %s:%d\n\n", addr, port);
-    printf("Type messages to send to server.\n");
-    printf("Type 'exit' to quit, or 'exit server' to shutdown the server.\n");
-    printf("Press Ctrl+C to exit at any time.\n\n");
+    printf("[INFO] Connected to %s:%d\n\n", addr, port);
 
     (void)client_loop(fd);
 
     close(fd);
-    printf("Exiting client...\nClient disconnected.\n");
+    printf("[INFO] Disconnected.\n");
 }
 
 
@@ -474,7 +457,7 @@ int get_command(char *cmd_buff, size_t cmd_buff_sz, msg_cmd_t *msg_cmd)
     
     // Get input from user
     if (fgets(cmd_buff, cmd_buff_sz, stdin) == NULL) {
-        printf("Error reading input command.\n\n");
+        printf("[WARNING] Error reading input command.\n\n");
         return CMD_NO_EXEC;
     }
     
