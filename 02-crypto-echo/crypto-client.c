@@ -172,10 +172,13 @@
 #include "crypto-client.h"
 #include "crypto-lib.h"
 #include "protocol.h"
+// Added this below
 #include <errno.h>
 
+// Helper function to check if a key is null
 static int is_null_key(crypto_key_t k) { return (k == NULL_CRYPTO_KEY); }
 
+// Helper to send all bytes over socket
 static ssize_t send_all(int fd, const void *buf, size_t len) {
     const uint8_t *p = (const uint8_t*)buf;
     size_t sent = 0;
@@ -188,6 +191,7 @@ static ssize_t send_all(int fd, const void *buf, size_t len) {
     return (ssize_t)sent;
 }
 
+// Helper to recieve the exact (len) bytes from a socket
 static ssize_t recv_all(int fd, void *buf, size_t len) {
     uint8_t *p = (uint8_t*)buf;
     size_t got = 0;
@@ -200,27 +204,33 @@ static ssize_t recv_all(int fd, void *buf, size_t len) {
     return (ssize_t)got;
 }
 
+// Reads a full crypto_msg_t from socket
+// Allocates the correct amount of memory
 static int recv_message(int fd, crypto_msg_t **out_msg, size_t *out_sz) {
     if (!out_msg || !out_sz) return -1;
     *out_msg = NULL; *out_sz = 0;
 
+    // Reads header
     uint8_t hdr[4];
     ssize_t h = recv_all(fd, hdr, sizeof(hdr));
     if (h == 0) return 0;
     if (h < 0)  return -2;
     if (h != 4) return -3;
 
+    // Convert header bytes into a crypto_pdu_t
     crypto_pdu_t pdu;
     pdu.msg_type  = hdr[0];
     pdu.direction = hdr[1];
     uint16_t nlen; memcpy(&nlen, &hdr[2], sizeof(uint16_t));
     pdu.payload_len = ntohs(nlen);
 
+    // Allocate size of message
     size_t total = sizeof(crypto_msg_t) + pdu.payload_len;
     crypto_msg_t *msg = (crypto_msg_t*)malloc(total);
     if (!msg) return -4;
 
-    msg->header = pdu; /* host-order length now */
+    msg->header = pdu; 
+    // Reads the payload if it exists
     if (pdu.payload_len > 0) {
         ssize_t r = recv_all(fd, msg->payload, pdu.payload_len);
         if (r == 0) { free(msg); return 0; }
@@ -231,6 +241,7 @@ static int recv_message(int fd, crypto_msg_t **out_msg, size_t *out_sz) {
     return 1;
 }
 
+
 static int build_packet(const msg_cmd_t *cmd, crypto_pdu_t *hdr, uint8_t *payload, crypto_key_t key) {
     if (!cmd || !hdr) return -1;
 
@@ -239,6 +250,8 @@ static int build_packet(const msg_cmd_t *cmd, crypto_pdu_t *hdr, uint8_t *payloa
     hdr->payload_len = 0;
 
     switch (cmd->cmd_id) {
+
+        // Plain text message
         case MSG_DATA: {
             if (!cmd->cmd_line) { hdr->payload_len = 0; return 0; }
             size_t len = strnlen(cmd->cmd_line, MAX_MSG_DATA_SIZE);
@@ -248,9 +261,11 @@ static int build_packet(const msg_cmd_t *cmd, crypto_pdu_t *hdr, uint8_t *payloa
             return (int)len;
         }
 
+
+        // Encrypted Message, you need a session key
         case MSG_ENCRYPTED_DATA: {
             if (!cmd->cmd_line) return -3;
-            if (is_null_key(key)) return -4; /* need session key first */
+            if (is_null_key(key)) return -4; // need session key first 
             size_t len = strnlen(cmd->cmd_line, MAX_MSG_DATA_SIZE);
             if (len > MAX_MSG_DATA_SIZE) return -2;
             if (!payload && len) return -5;
@@ -260,6 +275,7 @@ static int build_packet(const msg_cmd_t *cmd, crypto_pdu_t *hdr, uint8_t *payloa
             return enc;
         }
 
+        // These cases don't require a payload
         case MSG_KEY_EXCHANGE:
         case MSG_CMD_CLIENT_STOP:
         case MSG_CMD_SERVER_STOP:
@@ -268,11 +284,12 @@ static int build_packet(const msg_cmd_t *cmd, crypto_pdu_t *hdr, uint8_t *payloa
             return 0;
 
         default:
-            // Unknown/unsupported command id 
+            // Unknown/random commands
             return -6;
     }
 }
 
+// Handles the entire client interaction after connection
 static int client_loop(int sockfd) {
     char input[MAX_MSG_DATA_SIZE];
     msg_cmd_t cmd;
@@ -281,9 +298,11 @@ static int client_loop(int sockfd) {
     uint8_t payload[MAX_MSG_DATA_SIZE];
 
     for (;;) {
+        // Get user input
         int gr = get_command(input, sizeof(input), &cmd);
         if (gr == CMD_NO_EXEC) continue;
 
+        // Builds message
         crypto_pdu_t hdr;
         int plen = build_packet(&cmd, &hdr, payload, session_key);
         if (plen < 0) {
@@ -291,6 +310,8 @@ static int client_loop(int sockfd) {
             if (cmd.cmd_id == MSG_CMD_CLIENT_STOP || cmd.cmd_id == MSG_CMD_SERVER_STOP) break;
             continue;
         }
+
+        // Print message info
         crypto_msg_t *req = malloc(sizeof(crypto_msg_t) + hdr.payload_len);
         if (!req) {
             fprintf(stderr, "[ERROR] Out of memory.\n");
@@ -305,7 +326,7 @@ static int client_loop(int sockfd) {
         fflush(stdout);
         free(req);
 
-        /* Serialize 4-byte header with network-order length */
+        // Send header and payload to server side
         uint8_t net_hdr[4];
         net_hdr[0] = hdr.msg_type;
         net_hdr[1] = hdr.direction;
@@ -323,13 +344,13 @@ static int client_loop(int sockfd) {
             }
         }
 
-        /* If client/server stop command, we're done after sending */
+        // Handles exiting
         if (cmd.cmd_id == MSG_CMD_CLIENT_STOP || cmd.cmd_id == MSG_CMD_SERVER_STOP) {
             //printf("[INFO] Exit command sent. Closing.\n");
             break;
         }
 
-        /* Receive a response */
+        // Recieves a response
         crypto_msg_t *resp = NULL;
         size_t resp_sz = 0;
         int rr = recv_message(sockfd, &resp, &resp_sz);
@@ -345,7 +366,7 @@ static int client_loop(int sockfd) {
         // Debug/inspect 
         print_msg_info(resp, session_key, CLIENT_MODE);
 
-        // Process response semantics 
+        // Process response things
         if (resp->header.msg_type == MSG_KEY_EXCHANGE &&
             resp->header.payload_len == sizeof(crypto_key_t)) {
             memcpy(&session_key, resp->payload, sizeof(crypto_key_t));
@@ -421,9 +442,6 @@ void start_client(const char* addr, int port) {
 
     printf("Connected to %s:%d\n\n", addr, port);
     printf("Type messages to send to server.\n");
-    printf("Type 'exit' to quit, or 'exit server' to shutdown the server.\n");
-    printf("Press Ctrl+C to exit at any time.\n\n");
-
     (void)client_loop(fd);
 
     close(fd);

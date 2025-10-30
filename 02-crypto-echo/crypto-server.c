@@ -226,6 +226,7 @@
 #include "crypto-server.h"
 #include "crypto-lib.h"
 #include "protocol.h"
+// Included this below
 #include <errno.h> 
 
 /* =============================================================================
@@ -245,9 +246,8 @@
  * 
  * NOTE: If addr is "0.0.0.0", use INADDR_ANY instead of inet_pton()
  */
-/* ---------------------------------------------------------------------------
- * File-local forward declarations
- * ------------------------------------------------------------------------- */
+
+// Declarations
 static int server_loop(int server_sock, const char* addr, int port);
 static int service_client_loop(int client_sock);
 static int build_response(const crypto_msg_t *req,
@@ -255,9 +255,7 @@ static int build_response(const crypto_msg_t *req,
                           crypto_key_t *client_key,
                           crypto_key_t *server_key);
 
-/* =============================================================================
- * SERVER SOCKET SETUP
- * ============================================================================= */
+// Server socket setup
 void start_server(const char* addr, int port) {
     int server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0) { perror("socket"); return; }
@@ -305,9 +303,8 @@ void start_server(const char* addr, int port) {
     printf("Server shutdown complete.\n");
 }
 
-/* =============================================================================
- * ACCEPT LOOP (sequential clients)
- * ============================================================================= */
+// Loop
+// Accepts a client, handles it to completion, then loops for the next client.
 static int server_loop(int server_sock, const char* addr, int port) {
     (void)addr; (void)port;
 
@@ -329,7 +326,7 @@ static int server_loop(int server_sock, const char* addr, int port) {
 
         close(client_sock);
         printf("Client disconnected (%s)\n",
-               rc == RC_CLIENT_REQ_SERVER_EXIT ? "requested server shutdown" : "normal");
+               rc == RC_CLIENT_REQ_SERVER_EXIT ? "requested server shutdown" : " this is normal");
 
         if (rc == RC_CLIENT_REQ_SERVER_EXIT) {
             return 0; /* stop server */
@@ -337,9 +334,8 @@ static int server_loop(int server_sock, const char* addr, int port) {
     }
 }
 
-/* =============================================================================
- * PER-CLIENT SERVICE LOOP
- * ============================================================================= */
+// Reads PDUs from a single client and sends appropriate responses.
+// Maintains per-connection keys: server_key (kept), client_key (returned).
 static int service_client_loop(int client_sock) {
     crypto_key_t client_key = NULL_CRYPTO_KEY; /* sent to client on exchange */
     crypto_key_t server_key = NULL_CRYPTO_KEY; /* kept server-side */
@@ -348,17 +344,17 @@ static int service_client_loop(int client_sock) {
     uint8_t send_buf[BUFFER_SIZE];
 
     for (;;) {
-        /* ---- read exactly 4-byte header ---- */
+        // reads header
         uint8_t hdr[4];
         size_t got = 0;
         while (got < sizeof(hdr)) {
             ssize_t n = recv(client_sock, hdr + got, sizeof(hdr) - got, 0);
-            if (n == 0) return RC_CLIENT_EXITED;      /* peer closed */
+            if (n == 0) return RC_CLIENT_EXITED;     
             if (n < 0) { if (errno == EINTR) continue; perror("recv header"); return RC_CLIENT_EXITED; }
             got += (size_t)n;
         }
 
-        /* parse header; convert length from network order */
+        // parse header
         crypto_pdu_t pdu;
         pdu.msg_type  = hdr[0];
         pdu.direction = hdr[1];
@@ -370,8 +366,6 @@ static int service_client_loop(int client_sock) {
             fprintf(stderr, "payload too large (%u)\n", pdu.payload_len);
             return RC_CLIENT_EXITED;
         }
-
-        /* ---- read exactly payload_len bytes ---- */
         uint8_t *payload_dst = ((crypto_msg_t*)recv_buf)->payload;
         size_t need = pdu.payload_len, have = 0;
         while (have < need) {
@@ -380,35 +374,33 @@ static int service_client_loop(int client_sock) {
             if (n < 0) { if (errno == EINTR) continue; perror("recv payload"); return RC_CLIENT_EXITED; }
             have += (size_t)n;
         }
-
-        /* construct request struct in host order */
+        // response struct
         crypto_msg_t *req = (crypto_msg_t*)recv_buf;
         req->header = pdu;
 
-        /* Stop commands: no response */
+        // exit commands
         if (req->header.msg_type == MSG_CMD_SERVER_STOP) return RC_CLIENT_REQ_SERVER_EXIT;
         if (req->header.msg_type == MSG_CMD_CLIENT_STOP) return RC_CLIENT_EXITED;
 
-        /* build response (host-order header inside resp) */
+        // response
         crypto_msg_t *resp = (crypto_msg_t*)send_buf;
         int out_len = build_response(req, resp, &client_key, &server_key);
         if (out_len < 0) { fprintf(stderr, "build_response failed\n"); return RC_CLIENT_EXITED; }
 
-        /* ---- serialize and send response: 4-byte net header + payload ---- */
+        // sends response
         uint8_t out_hdr[4];
         out_hdr[0] = resp->header.msg_type;
         out_hdr[1] = DIR_RESPONSE;
         uint16_t out_nlen = htons(resp->header.payload_len);
         memcpy(&out_hdr[2], &out_nlen, sizeof(uint16_t));
 
-        /* header */
         size_t sent = 0;
         while (sent < sizeof(out_hdr)) {
             ssize_t m = send(client_sock, out_hdr + sent, sizeof(out_hdr) - sent, 0);
             if (m < 0) { if (errno == EINTR) continue; perror("send hdr"); return RC_CLIENT_EXITED; }
             sent += (size_t)m;
         }
-        /* payload (if any) */
+    
         size_t psent = 0, plen = resp->header.payload_len;
         while (psent < plen) {
             ssize_t m = send(client_sock, resp->payload + psent, plen - psent, 0);
@@ -418,10 +410,7 @@ static int service_client_loop(int client_sock) {
     }
 }
 
-
-/* =============================================================================
- * RESPONSE BUILDER
- * ============================================================================= */
+// Builds the server's response PDU based on the client's request PDU
 static int build_response(const crypto_msg_t *req,
                           crypto_msg_t *resp,
                           crypto_key_t *client_key,
@@ -448,7 +437,6 @@ static int build_response(const crypto_msg_t *req,
             const char *prefix = "echo ";
             size_t prefix_len = strlen(prefix);
 
-            /* Clamp to our output capacity */
             size_t out_cap = MAX_MSG_DATA_SIZE;
             size_t copy_len = in_len;
             if (prefix_len + copy_len > out_cap) {
@@ -467,7 +455,6 @@ static int build_response(const crypto_msg_t *req,
                 return -1;
             }
 
-            /* Decrypt into a temp buffer sized by MAX_MSG_DATA_SIZE */
             uint8_t plain[MAX_MSG_DATA_SIZE];
             int dec_len = decrypt_string(*server_key, plain, (uint8_t*)in_payload, (int)in_len);
             if (dec_len < 0) return -1;
@@ -478,7 +465,6 @@ static int build_response(const crypto_msg_t *req,
             uint8_t to_enc[MAX_MSG_DATA_SIZE];
             size_t total_plain = prefix_len + (size_t)dec_len;
             if (total_plain > MAX_MSG_DATA_SIZE) {
-                /* truncate decoded portion to fit */
                 dec_len = (int)(MAX_MSG_DATA_SIZE - prefix_len);
                 total_plain = MAX_MSG_DATA_SIZE;
             }
@@ -494,11 +480,9 @@ static int build_response(const crypto_msg_t *req,
         }
 
         default:
-            /* No payload for unknown/command types */
             resp->header.payload_len = 0;
             break;
     }
 
     return (int)(sizeof(crypto_pdu_t) + resp->header.payload_len);
 }
-
