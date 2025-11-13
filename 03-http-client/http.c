@@ -180,28 +180,41 @@ int get_http_header_len(char *http_buff, int http_buff_len){
     return header_len;
 }
 
-
+/*
+* Purpose: reads the http header (delimited by http_header_len) and returns
+* the number value of the "content-length" field
+*
+* Reads the header buffer line by line up to http_header_len bytes
+* Checks each line for "content-length" - doesn't worry about upper or lower case
+* If found, parses the number
+*
+*/
 int get_http_content_len(char *http_buff, int http_header_len){
     char header_line[MAX_HEADER_LINE];
 
     char *next_header_line = http_buff;
     char *end_header_buff = http_buff + http_header_len;
 
+    // loops until header ends
     while (next_header_line < end_header_buff){
         bzero(header_line,sizeof(header_line));
         sscanf(next_header_line,"%[^\r\n]s", header_line);
 
+        // checks for "content-length", doesn't care about case sensitivity
         char *isCLHeader = strcasestr(header_line,CL_HEADER);
         if(isCLHeader != NULL){
+            // checks for : which is http_header_delim 
             char *header_value_start = strchr(header_line, HTTP_HEADER_DELIM);
             if (header_value_start != NULL){
                 char *header_value = header_value_start + 1;
-                int content_len = atoi(header_value);
-                return content_len;
+                int content_len = atoi(header_value); // parses the content length
+                return content_len; 
             }
         }
+        // advance to next line in buffer
         next_header_line += strlen(header_line) + strlen(HTTP_HEADER_EOL);
     }
+    // no body is found
     fprintf(stderr,"Did not find content length\n");
     return 0;
 }
@@ -226,6 +239,12 @@ void print_header(char *http_buff, int http_header_len){
 // to change the signature in the http.h header file :-).  You also need to update client-ka.c to 
 // use this function to get full extra credit. 
 //--------------------------------------------------------------------------------------
+/*
+* 
+* I dont have to document this do I?
+*
+*
+*/
 int process_http_header(char *http_buff, int http_buff_len, int *header_len, int *content_len){
     int h_len, c_len = 0;
     h_len = get_http_header_len(http_buff, http_buff_len);
