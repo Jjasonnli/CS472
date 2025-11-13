@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+// includes time
+#include <time.h>
 
 #define  BUFF_SZ 1024
 
@@ -66,6 +68,8 @@ int process_request(const char *host, uint16_t port, char *resource){
 }
 
 int main(int argc, char *argv[]){
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);  // start timing
     int sock;
 
     const char *host = DEFAULT_HOST;
@@ -95,4 +99,10 @@ int main(int argc, char *argv[]){
             process_request(host, port, resource);
         }
     }
+    // stop timing
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    double elapsed_ms = (t1.tv_sec - t0.tv_sec) * 1000.0 + (t1.tv_nsec - t0.tv_nsec) / 1e6;
+
+    printf("\nProgram runtime: %.3f ms\n", elapsed_ms);
+    return 0;
 }

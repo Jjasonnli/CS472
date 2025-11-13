@@ -1,0 +1,18 @@
+make run-cc3 times:
+Connection: Close (client-c.c)
+1: 1730.068 ms
+2: 4560.048 ms
+3: 5866.225 ms
+Average: 4052.11 ms
+
+make run-ka3 times:
+Connection: Keep-Alive (client-ka.c)
+1: 2309.626 ms
+2: 3174.347 ms
+3: 4286.385 ms
+Average: 3256.786
+
+Keep-Alive connection is on average ~19.63% faster than close connection
+
+This makes sense since HTTP/1.1 Keep-Alive reuses the TCP connection for each request which avoids repeated connection setup.
+Having a bigger sample size should make more sense as the first run for close connection was a lot faster than the 2 following. 
