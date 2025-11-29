@@ -1,4 +1,3 @@
-
 HEADERS = udp_proto.h
 CFLAGS = -g -Wall -Wno-unused-function
 CC = gcc
